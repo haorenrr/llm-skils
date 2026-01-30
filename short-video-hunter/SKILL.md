@@ -13,26 +13,34 @@ description: 治愈系猎人 - 寻找并获取短视频，尤其是擅长于让�
 1. **意境第一 (Healing & Expansive)**：
    - 优先选择：极目远眺的群山、无尽的海平线、宁静的田园、治愈的云卷云舒。
    - **新增主题：公路驾驶 (Open Road)**。寻找那种在空旷公路上行驶，前方是雪山、荒漠或大海的画面，象征自由与远方。
-2. **原生比例优先 (9:16 Native)**：
-   - 绝对优先抓取原生竖屏视频，保留原始构图的纯净感。
+2. **比例标准化 (9:16 Normalization)**：
+   - 优先抓取原生竖屏。若素材为横屏，脚本将自动采用“背景模糊+居中裁剪”方案进行 9:16 标准化。
 3. **独立运行 (Self-Contained)**：
    - 必须使用本 Skill 目录下的脚本，禁止跨 Skill 调用。
 4. **分辨率兼容**：1080p 为佳，720p 亦可。
 
 ## 关键技术警示 (CRITICAL WARNING)
 1. **参数强制**：`yt-dlp` 必须包含 `--js-runtimes node`。
-2. **脚本调用路径**：`.gemini/skills/short-video-hunter/scripts/video_processor.py`。
-3. **时长过滤**：严格控制在 35 秒以内。
+2. **搜索避坑**：避免在 `yt-dlp` 命令行中使用复杂的 `--match-filter`（如 `width < height`），因为元数据缺失可能导致脚本崩溃。应通过关键词（如 `vertical`, `shorts`）进行逻辑筛选。
+3. **脚本调用路径**：`.gemini/skills/short-video-hunter/scripts/video_processor.py`。
+4. **时长过滤**：严格控制在 35 秒以内。
 
 ## 推荐关键词库 (Keyword Palette)
+- **审美增强词 (Aesthetic Modifiers)**: `Cinematic`, `Aesthetic`, `Minimalist`, `Lo-fi`, `POV`, `4K HDR`.
 - **大美风景 (Grand Landscapes)**: `Breathtaking cinematic scenery`, `expansive mountain range views`, `endless ocean horizon`.
 - **公路驾驶 (Open Road Freedom)**: `Cinematic driving on empty road`, `road trip to mountains shorts`, `endless highway towards horizon`, `healing car driving views`.
 - **治愈田园 (Rural Serenity)**: `Peaceful countryside life`, `village morning mist`, `healing rural landscape`.
 
+## 最佳实践与故障排除 (Best Practices & Troubleshooting)
+1. **应对下载受限**：若遇到 `HTTP Error 403: Forbidden`，不要重试同一链接。应立即从搜索列表中选择下一个备选资源。
+2. **关键词组合策略**：推荐使用 `[主题词] + [审美词] + #shorts + vertical` 的组合，这比单纯依赖技术过滤更稳健。
+3. **地域定位**：若需极高质感，可加入具体地标（如 `Iceland road`, `Lofoten drive`, `Swiss Alps`）。
+
 ## 工作流 (Workflow)
 
 ### 1. 深度搜索 (Expansive Search)
-`yt-dlp --js-runtimes node --match-filter "duration <= 35" --print "%(webpage_url)s | %(title)s | %(width)s x %(height)s" "ytsearch30:[Theme Keyword] #shorts"`
+建议先进行广度搜索获取候选列表：
+`yt-dlp --js-runtimes node --max-downloads 20 --print "%(webpage_url)s | %(title)s" "ytsearch30:[Theme Keyword] [Aesthetic Keyword] #shorts vertical"`
 
 ### 2. 标准化加工 (Execution)
 调用本目录下的脚本进行加工：
