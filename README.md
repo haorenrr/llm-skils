@@ -78,7 +78,7 @@ AI（Claude、Gemini 等）会处理所有技术细节，你只需要：
 
 ### 安装skill
  ```bash
-   gemini skill install git clone https://github.com/yourusername/llm-skills.git --path=short-video-hunter
+   gemini skill install https://github.com/haorenrr/llm-skils.git --path=short-video-hunter
 ```
 
 ### 通过 AI 对话使用风景猎人
