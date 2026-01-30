@@ -277,9 +277,6 @@ AI（Claude、Gemini 等）会处理所有技术细节，你只需要：
 ## 支持和反馈
 
 - 📖 **文档**：查看 [short-video-hunter/SKILL.md](short-video-hunter/SKILL.md)
-- 🐛 **问题反馈**：[GitHub Issues](https://github.com/yourusername/llm-skills/issues)
-- 💬 **讨论**：[GitHub Discussions](https://github.com/yourusername/llm-skills/discussions)
-- 📧 **邮件**：support@example.com
 
 ## 鸣谢
 
@@ -287,10 +284,3 @@ AI（Claude、Gemini 等）会处理所有技术细节，你只需要：
 - 灵感来自对专业级 AI 工作流的需求
 - 社区反馈推动持续改进
 - 感谢 `yt-dlp` 和 `ffmpeg` 社区
-
----
-
-**最后更新**：2026年1月30日  
-**状态**：🟢 活跃开发中  
-**维护团队**：你的团队  
-**下个版本**：2026年Q2
