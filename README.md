@@ -61,7 +61,7 @@ AI（Claude、Gemini 等）会处理所有技术细节，你只需要：
 
 ### 三步上手
 
-1. **打开 Claude 或 Gemini**（或其他支持的 LLM）
+1. **打开 Claude cli 或 Gemini cli**（或其他支持的 LLM）
 
 2. **启用风景猎人技能**（如果平台需要）
 
@@ -75,6 +75,11 @@ AI（Claude、Gemini 等）会处理所有技术细节，你只需要：
 4. **AI 自动处理**→ 搜索、下载、处理、优化、交付
 
 ## 使用方法
+
+### 安装skill
+ ```bash
+   gemini skill install git clone https://github.com/yourusername/llm-skills.git --path=short-video-hunter
+```
 
 ### 通过 AI 对话使用风景猎人
 
