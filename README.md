@@ -180,7 +180,7 @@ AI（Claude、Gemini 等）会处理所有技术细节，你只需要：
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/yourusername/llm-skills.git
+   git clone https://github.com/haorenrr/llm-skils.git
    cd llm-skills/short-video-hunter
    ```
 
