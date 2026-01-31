@@ -11,7 +11,8 @@ if sys.stdout.encoding != 'utf-8':
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--url", required=True)
+    parser.add_argument("--url", help="URL of the video to download and process")
+    parser.add_argument("--local_path", help="Path to a local video file to process directly")
     parser.add_argument("--start", required=True)
     parser.add_argument("--duration", type=int, default=15)
     parser.add_argument("--caption", required=True)
@@ -19,6 +20,10 @@ def main():
     parser.add_argument("--x_offset", type=str, default="(iw-ow)/2", help="Horizontal offset for crop mode (e.g. '0' for left, 'iw-ow' for right, default is center)")
     parser.add_argument("--output")
     args = parser.parse_args()
+
+    if not args.url and not args.local_path:
+        print("Error: Either --url or --local_path must be provided.")
+        return
 
     out_dir = "output"
     tmp_dir = os.path.join(out_dir, "tmp")
@@ -29,20 +34,23 @@ def main():
     safe_title = re.sub(r'[\\/*?:"<<>>|]', '', args.caption).replace(' ', '_')
     final_name = args.output if args.output else f"{safe_title}_{ts}.mp4"
 
-    tmp_full = os.path.join(tmp_dir, f"full_{ts}.mp4")
+    tmp_full = args.local_path if args.local_path else os.path.join(tmp_dir, f"full_{ts}.mp4")
     final_video = os.path.join(out_dir, final_name)
 
     try:
-        # 1. Download
-        print(f"--- Downloading video resource ---")
-        dl_cmd = [
-            'yt-dlp', '--quiet', '--no-warnings', '--js-runtimes', 'node',
-            '-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]',
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            '--no-check-certificates', '-o', tmp_full, args.url
-        ]
-        print(f">>> exec cmd: {shlex.join(dl_cmd)}")
-        subprocess.run(dl_cmd, check=True)
+        # 1. Download if local_path is not provided
+        if not args.local_path:
+            print(f"--- Downloading video resource ---")
+            dl_cmd = [
+                'yt-dlp', '--quiet', '--no-warnings', '--js-runtimes', 'node',
+                '-f', 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]',
+                '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                '--no-check-certificates', '-o', tmp_full, args.url
+            ]
+            print(f">>> exec cmd: {shlex.join(dl_cmd)}")
+            subprocess.run(dl_cmd, check=True)
+        else:
+            print(f"--- Using local video file: {args.local_path} ---")
 
         # 2. Clip and Process (9:16)
         print(f"--- Clipping and visual standardization (9:16 Mode: {args.mode}) ---")

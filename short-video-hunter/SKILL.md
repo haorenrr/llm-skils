@@ -28,6 +28,29 @@ description: 治愈系猎人 - 寻找并获取短视频，尤其是擅长于让�
 6. **独立运行 (Self-Contained)**：
    - 必须使用本 Skill 目录下的脚本，禁止跨 Skill 调用。
 
+## 交互模式：人机协作工作流 (Collaborative Mode)
+当遇到平台强力封锁（如 HTTP 403 错误）导致自动化下载失败时，启用此模式：
+
+1.  **线索分发 (Candidate Discovery)**：
+    - 我搜索并提供高潜力视频清单（URL、播放量、标题）。
+2.  **手动接力 (Manual Handoff)**：
+    - 你在本地手动下载视频，并将其放入 `output/tmp/` 目录。
+    - 你告诉我本地文件名。
+3.  **智能识别与加工 (Local Processing)**：
+    - 我对本地文件进行抽帧 (`ffmpeg`) 并分析重心。
+    - 调用脚本：`python .gemini/skills/short-video-hunter/scripts/video_processor.py --local_path "output/tmp/[FileName]" --start "[Start]" --caption "[Title]" --mode [blur/crop]`
+
+## 环境准备 (Setup)
+- **核心依赖**:
+  - 确保系统已安装 `ffmpeg` 并配置在环境变量中 (必须)，若无此工具，则提醒用户安装。
+    - Windows用户可下载 builds 压缩包，解压并将 `bin` 目录添加到系统 PATH。
+  - Python 环境需安装或更新 `requirements.txt` 中的依赖：
+    `pip install --upgrade -r .gemini/skills/history-pic/requirements.txt`
+- **资源文件**:
+  - 确保 `.gemini/skills/history-pic/assets/` 目录下包含 `simhei.ttf` (中文字体)。
+  - 若需生成带背景音乐的视频，请在 assets 目录下放入 `bgm_positive.mp3`。
+
+
 ## 关键技术警示 (CRITICAL WARNING)
 1. **参数强制**：`yt-dlp` 必须包含 `--js-runtimes node`。
 2. **搜索避坑**：避免在 `yt-dlp` 命令行中使用复杂的 `--match-filter`。应通过关键词（如 `vertical`, `shorts`）进行逻辑筛选。
