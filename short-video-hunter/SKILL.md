@@ -12,18 +12,26 @@ description: 治愈系猎人 - 寻找并获取短视频，尤其是擅长于让�
 ## 核心准则 (The Core Rules)
 1. **意境第一 (Healing & Expansive)**：
    - 优先选择：极目远眺的群山、无尽的海平线、宁静的田园、治愈的云卷云舒。
-   - **新增主题：公路驾驶 (Open Road)**。寻找那种在空旷公路上行驶，前方是雪山、荒漠或大海的画面，象征自由与远方。
+   - **公路驾驶 (Open Road)**：寻找在空旷公路上行驶，前方是雪山、荒漠或大海的画面。
 2. **比例标准化 (9:16 Normalization)**：
-   - 优先抓取原生竖屏。若素材为横屏，脚本将自动采用“背景模糊+居中裁剪”方案进行 9:16 标准化。
-3. **独立运行 (Self-Contained)**：
+   - **默认 (Blur Mode)**：用于广阔构图，采用“背景模糊+居中叠加”方案。
+   - **智能全屏 (Smart Crop Mode)**：当提及“竖屏/9:16/全屏”时，执行原生点对点裁剪。
+3. **智能重心追踪 (Smart Saliency Tracking)**：
+   - **多点采样**：对候选视频进行 3-5 点抽帧。
+   - **LLM 视觉对齐**：通过 LLM 视觉能力分析图片，定出主体在 X 轴的重心 `x_percent`。
+   - **平滑跟随 (Smooth Pan)**：若主体在移动，利用 FFmpeg 动态表达式 `(iw-ow)*f(t)` 实现云台级平滑追踪。
+   - **稳定性过滤**：**镜头晃动剧烈或运镜无序的素材直接丢弃**，只保留稳如云台的治愈画面。
+4. **画质红线 (Zero-Loss Quality)**：
+   - **严禁拉伸 (No Upscaling)**：直接截取原始像素，确保 4K/1080p 的原生锐度，绝不模糊。
+5. **独立运行 (Self-Contained)**：
    - 必须使用本 Skill 目录下的脚本，禁止跨 Skill 调用。
-4. **分辨率兼容**：1080p 为佳，720p 亦可。
 
 ## 关键技术警示 (CRITICAL WARNING)
 1. **参数强制**：`yt-dlp` 必须包含 `--js-runtimes node`。
 2. **搜索避坑**：避免在 `yt-dlp` 命令行中使用复杂的 `--match-filter`（如 `width < height`），因为元数据缺失可能导致脚本崩溃。应通过关键词（如 `vertical`, `shorts`）进行逻辑筛选。
-3. **脚本调用路径**：`.gemini/skills/short-video-hunter/scripts/video_processor.py`。
-4. **时长过滤**：严格控制在 35 秒以内。
+3. **处理逻辑**：调用脚本时，`--mode crop` 需配合 `--x_offset` 表达式。
+4. **脚本调用路径**：`.gemini/skills/short-video-hunter/scripts/video_processor.py`。
+5. **时长过滤**：严格控制在 35 秒以内。
 
 ## 推荐关键词库 (Keyword Palette)
 - **审美增强词 (Aesthetic Modifiers)**: `Cinematic`, `Aesthetic`, `Minimalist`, `Lo-fi`, `POV`, `4K HDR`.
@@ -42,9 +50,14 @@ description: 治愈系猎人 - 寻找并获取短视频，尤其是擅长于让�
 建议先进行广度搜索获取候选列表：
 `yt-dlp --js-runtimes node --max-downloads 20 --print "%(webpage_url)s | %(title)s" "ytsearch30:[Theme Keyword] [Aesthetic Keyword] #shorts vertical"`
 
-### 2. 标准化加工 (Execution)
-调用本目录下的脚本进行加工：
-`python .gemini/skills/short-video-hunter/scripts/video_processor.py --url "[URL]" --start "00:00:00" --duration 15 --caption "[Healing_Theme_Description]"`
+### 2. 侦察与智能决策 (Scout & ROI Decision)
+1. **抽样**：对候选视频进行 3-5 点静默抽帧，存入 `output/tmp/`。
+2. **审片**：LLM 读取图片，判定主体位置及镜头稳定性。
+3. **计算**：得出 `x_offset`。若是摇镜，构建 `x1+(x2-x1)*t/duration` 动态函数。
+
+### 3. 标准化加工 (Execution)
+`python .gemini/skills/short-video-hunter/scripts/video_processor.py --url "[URL]" --mode [blur/crop] --x_offset "[Expression]" --caption "[Title]"`
+*注意：脚本会自动将中间文件放入 `output/tmp/` 并进行清理。*
 
 ## 交互示例 (User Interaction)
 - **用户**：“我想看那种在公路上一直开，通往雪山或者海边的视频，要很解压的那种。”

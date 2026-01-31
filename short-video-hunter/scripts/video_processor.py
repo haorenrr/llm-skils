@@ -15,17 +15,21 @@ def main():
     parser.add_argument("--start", required=True)
     parser.add_argument("--duration", type=int, default=15)
     parser.add_argument("--caption", required=True)
+    parser.add_argument("--mode", choices=['blur', 'crop'], default='blur', help="Processing mode: 'blur' (default) or 'crop' (9:16 center crop)")
+    parser.add_argument("--x_offset", type=str, default="(iw-ow)/2", help="Horizontal offset for crop mode (e.g. '0' for left, 'iw-ow' for right, default is center)")
     parser.add_argument("--output")
     args = parser.parse_args()
 
     out_dir = "output"
+    tmp_dir = os.path.join(out_dir, "tmp")
     if not os.path.exists(out_dir): os.makedirs(out_dir)
+    if not os.path.exists(tmp_dir): os.makedirs(tmp_dir)
 
     ts = datetime.now().strftime("%y%m%d_%H%M%S")
     safe_title = re.sub(r'[\\/*?:"<<>>|]', '', args.caption).replace(' ', '_')
     final_name = args.output if args.output else f"{safe_title}_{ts}.mp4"
 
-    tmp_full = os.path.join(out_dir, f"full_{ts}.mp4")
+    tmp_full = os.path.join(tmp_dir, f"full_{ts}.mp4")
     final_video = os.path.join(out_dir, final_name)
 
     try:
@@ -41,22 +45,36 @@ def main():
         subprocess.run(dl_cmd, check=True)
 
         # 2. Clip and Process (9:16)
-        print(f"--- Clipping and visual standardization (9:16) ---")
+        print(f"--- Clipping and visual standardization (9:16 Mode: {args.mode}) ---")
         sc = ';'
-        filter_str = (
-            f"[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=20:10[bg]{sc}"
-            f"[0:v]scale=1080:-1[fg]{sc}"
-            f"[bg][fg]overlay=(W-w)/2:(H-h)/2[outv]"
-        )
+        
+        if args.mode == 'blur':
+            filter_str = (
+                f"[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=20:10[bg]{sc}"
+                f"[0:v]scale=1080:-1[fg]{sc}"
+                f"[bg][fg]overlay=(W-w)/2:(H-h)/2[outv]"
+            )
+        else: # crop mode
+            # Crop to 9:16 aspect ratio based on original height, then ensure even dimensions
+            # Use provided x_offset or default to center
+            filter_str = f"crop=floor(ih*9/16/2)*2:ih:{args.x_offset}:0,setsar=1"
 
         process_cmd = [
             'ffmpeg', '-i', tmp_full,
             '-ss', args.start, '-t', str(args.duration),
-            '-filter_complex', filter_str,
-            '-map', '[outv]', '-map', '0:a?',
+        ]
+        
+        if args.mode == 'blur':
+            process_cmd.extend(['-filter_complex', filter_str, '-map', '[outv]'])
+        else:
+            # Explicitly map video stream when using simple filter -vf
+            process_cmd.extend(['-vf', filter_str, '-map', '0:v'])
+        
+        process_cmd.extend([
+            '-map', '0:a?',
             '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
             '-c:a', 'aac', '-y', final_video
-        ]
+        ])
         print(f">>> exec cmd: {shlex.join(process_cmd)}")
         subprocess.run(process_cmd, check=True)
         
